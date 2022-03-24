@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.stubbing.OngoingStubbing;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -40,7 +39,7 @@ public class MappingsUtilsTest {
         setField(marvelService, "marvelMappings", mappings);
 
         // When
-        String res = marvelService.getMarvelHero("green", "");
+        String res = marvelService.getMarvelHero("green", "", "");
 
         // Then
         assertThat(res, is("hulk"));
@@ -53,7 +52,7 @@ public class MappingsUtilsTest {
         setField(marvelService, "marvelMappings", mappings);
 
         // When
-        String res = marvelService.getMarvelHero("green", "");
+        String res = marvelService.getMarvelHero("green", "", "");
 
         // Then
         assertThat(res, is("No marvel hero found for those attributes"));
@@ -64,13 +63,15 @@ public class MappingsUtilsTest {
         // Given
         Map<MarvelKey, String> mappings = new HashMap<>();
         setField(marvelService, "marvelMappings", mappings);
-        when(mappingsUtils.getMarvelMappings()).thenReturn(mappings);
+        when(mappingsUtils.getMarvelMappings("marvel_mappings_v1_0.csv")).thenReturn(mappings);
+        when(mappingsUtils.isFollowingFileNameStandard(any())).thenReturn(true);
 
         // When
-        marvelService.updateMappings("marvel_mappings");
+        marvelService.updateMappings("marvel_mappings_v1_0.csv");
 
         // Then
-        verify(mappingsUtils, times(1)).getMarvelMappings();
+        verify(mappingsUtils, times(1)).isFollowingFileNameStandard(any());
+        verify(mappingsUtils, times(1)).getMarvelMappings("marvel_mappings_v1_0.csv");
     }
 
     @Test
@@ -78,11 +79,28 @@ public class MappingsUtilsTest {
         // Given
         Map<MarvelKey, String> mappings = new HashMap<>();
         setField(marvelService, "marvelMappings", mappings);
+        when(mappingsUtils.isFollowingFileNameStandard(any())).thenReturn(false);
 
         // When
         marvelService.updateMappings("other");
 
         // Then
+        verify(mappingsUtils, times(1)).isFollowingFileNameStandard(any());
+        verify(mappingsUtils, times(0)).getMarvelMappings();
+    }
+
+    @Test
+    public void givenInvalidMappingName_whenUpdateMappings_returnNull() throws IOException {
+        // Given
+        Map<MarvelKey, String> mappings = new HashMap<>();
+        setField(marvelService, "marvelMappings", mappings);
+        when(mappingsUtils.isFollowingFileNameStandard(any())).thenReturn(false);
+
+        // When
+        marvelService.updateMappings("marvel_mappings_v1_1 copy.csv");
+
+        // Then
+        verify(mappingsUtils, times(1)).isFollowingFileNameStandard(any());
         verify(mappingsUtils, times(0)).getMarvelMappings();
     }
 

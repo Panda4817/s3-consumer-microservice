@@ -12,29 +12,39 @@ import software.amazon.awssdk.services.s3.model.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import static dev.kmunton.mappings.consumer.impl.models.MappingFileNames.MARVEL;
 import static dev.kmunton.mappings.consumer.impl.utils.StringHandlerUtils.handleEmpty;
 
 @Component
 public class MappingsUtils {
 
-
-    private final static String BUCKET_NAME = "mappings-demo";
+    
+    private final static String MARVEL_BUCKET_NAME = "mappings-demo";
+    private final static String MARVEL_FILE_NAME_PREFIX = "marvel_mappings";
+    private final static Pattern FILE_NAME_REGEX = Pattern.compile("^([a-z_]+)_v([0-9])_([0-9])\\.csv$");
 
     private final static S3Client s3Client = S3Client.builder().region(Region.EU_WEST_2)
             .credentialsProvider(DefaultCredentialsProvider.create())
             .build();
 
     public Map<MarvelKey, String> getMarvelMappings() throws IOException {
-        try {
+        return transformToMap(findAndGetLatestObjectFromBucket(MARVEL_BUCKET_NAME, MARVEL_FILE_NAME_PREFIX));
+    }
 
-            return readLines(new InputStreamReader(getLatestObject(MARVEL.getName()))).stream()
-                    .collect(Collectors.toMap(s -> new MarvelKey(handleEmpty(s[0]), handleEmpty(s[1]), handleEmpty(s[2])), s -> s[3]));
+    public Map<MarvelKey, String> getMarvelMappings(final String fileName) throws IOException {
+        return transformToMap(getLatestObject(MARVEL_BUCKET_NAME, fileName));
+    }
+
+    public boolean isFollowingFileNameStandard(final String fileName) {
+        return FILE_NAME_REGEX.matcher(fileName).matches();
+    }
+
+    private Map<MarvelKey, String> transformToMap(final  ResponseInputStream<GetObjectResponse> responseStream) throws IOException {
+        try {
+            return readLines(new InputStreamReader(responseStream)).stream()
+                    .collect(Collectors.toMap(s -> new MarvelKey(handleEmpty(s[0]), handleEmpty(s[1]),handleEmpty(s[2])), s -> s[3]));
 
         } catch (S3Exception | IOException e) {
             System.out.println(e.getMessage());
@@ -50,20 +60,51 @@ public class MappingsUtils {
 
     }
 
-    private ResponseInputStream<GetObjectResponse> getLatestObject(final String filter) {
+    private ResponseInputStream<GetObjectResponse> findAndGetLatestObjectFromBucket(final String bucketName, final String fileNamePrefix) {
 
         ListObjectsV2Request listObjectsRequest = ListObjectsV2Request
                 .builder()
-                .bucket(BUCKET_NAME)
-                .prefix(filter)
+                .bucket(bucketName)
+                .prefix(fileNamePrefix)
                 .build();
 
         ListObjectsV2Response res = s3Client.listObjectsV2(listObjectsRequest);
-        String key = res.contents().stream().max(Comparator.comparing(S3Object::lastModified)).get().key();
-        System.out.println(key);
+        List<S3Object> s3Objects = res.contents();
+        String latestVersion = getLatestVersion(s3Objects);
+        System.out.println("Looking for latest version " + latestVersion);
+        Optional<S3Object> latestObject = s3Objects.stream().filter(object -> object.key().equals(fileNamePrefix+"_v"+latestVersion)).findFirst();
+        if(latestObject.isEmpty()) {
+            System.out.println("No file found with latest version");
+            throw new RuntimeException("No file found with latest version");
+        }
+
+        return getLatestObject(bucketName, latestObject.get().key());
+    }
+
+
+    private String getLatestVersion(final List<S3Object> s3Objects) {
+        OptionalDouble version = s3Objects.stream()
+                .filter(object -> isFollowingFileNameStandard(object.key()))
+                .map(object -> object.key().split("_v")[1].split("\\.")[0])
+                .map(versionStr -> versionStr.replace("_", "."))
+                .mapToDouble(Double::parseDouble)
+                .max();
+
+        if (version.isPresent()) {
+            return String.valueOf(version.getAsDouble()).replace(".", "_") + ".csv";
+        }
+
+        System.out.println("Something went wrong, no Version found");
+        throw new RuntimeException("Something went wrong, no Version found");
+    }
+
+
+
+    private ResponseInputStream<GetObjectResponse> getLatestObject(final String bucketName, final String fileName) {
+
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(BUCKET_NAME)
-                .key(key)
+                .bucket(bucketName)
+                .key(fileName)
                 .build();
 
         return s3Client.getObject(getObjectRequest);

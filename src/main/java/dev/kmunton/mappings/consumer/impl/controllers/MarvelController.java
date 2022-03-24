@@ -19,8 +19,8 @@ public class MarvelController implements ConsumerContract {
 
     @Override
     @GetMapping(value = "marvel", produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<String> getMarvelHero(String attribute1, String attribute2) {
-        return new ResponseEntity<>(marvelService.getMarvelHero(attribute1, attribute2), HttpStatus.OK);
+    public ResponseEntity<String> getMarvelHero(String attribute1, String attribute2, String attribute3) {
+        return new ResponseEntity<>(marvelService.getMarvelHero(attribute1, attribute2, attribute3), HttpStatus.OK);
     }
 
     @Override

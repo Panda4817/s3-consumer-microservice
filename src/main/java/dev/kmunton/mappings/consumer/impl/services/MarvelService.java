@@ -32,22 +32,21 @@ public class MarvelService {
         marvelMappings = mappingsUtils.getMarvelMappings();
     }
 
-    public String getMarvelHero(String attribute1, String attribute2) {
+    public String getMarvelHero(String attribute1, String attribute2, String attribute3) {
 
-        MarvelKey key = new MarvelKey(handleEmpty(attribute1), handleEmpty(attribute2), "");
+        MarvelKey key = new MarvelKey(handleEmpty(attribute1), handleEmpty(attribute2), handleEmpty(attribute3));
 
         System.out.println(key);
 
         Optional<Map.Entry<MarvelKey, String>> res = marvelMappings.entrySet().stream()
                 .filter(mapping ->
-                        Objects.equals(mapping.getKey().attribute1(), key.attribute1())
-                                || Objects.equals(mapping.getKey().attribute2(), key.attribute1())
-                                || Objects.equals(mapping.getKey().attribute3(), key.attribute1()))
+                        Objects.equals(mapping.getKey().attribute1(), key.attribute1()))
                 .filter(mapping ->
-                        Objects.equals(mapping.getKey().attribute1(), key.attribute2())
-                                || Objects.equals(mapping.getKey().attribute2(), key.attribute2())
-                                || Objects.equals(mapping.getKey().attribute3(), key.attribute2())
+                        Objects.equals(mapping.getKey().attribute2(), key.attribute2())
                                 || Objects.equals(key.attribute2(), ""))
+                .filter(mapping ->
+                        Objects.equals(mapping.getKey().attribute3(), key.attribute3())
+                                || Objects.equals(key.attribute3(), ""))
                 .findFirst();
 
         if (res.isPresent()) return res.get().getValue();
@@ -58,8 +57,8 @@ public class MarvelService {
 
     public void updateMappings(final String key) throws IOException {
 
-        if (key.contains(MARVEL.getName())) {
-            marvelMappings = mappingsUtils.getMarvelMappings();
+        if (mappingsUtils.isFollowingFileNameStandard(key) && key.contains("marvel_mappings")) {
+            marvelMappings = mappingsUtils.getMarvelMappings(key);
         }
 
     }

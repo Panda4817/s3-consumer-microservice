@@ -20,7 +20,8 @@ public interface ConsumerContract {
             @ApiResponse(responseCode = "400", description = "The request was malformed"),
             @ApiResponse(responseCode = "500", description = "Marvel hero could not be retrieved due to an unknown error")})
     ResponseEntity<String> getMarvelHero(@Parameter(name = "attribute1", in= QUERY, required = true, example = "red") String attribute1,
-                                         @Parameter(name = "attribute2", in= QUERY, required = false) String attribute2);
+                                         @Parameter(name = "attribute2", in= QUERY, required = false) String attribute2,
+                                         @Parameter(name = "attribute3", in= QUERY, required = false )String attribute3);
 
     @Operation(summary = "Refresh Mappings")
     @ApiResponses(value = {
