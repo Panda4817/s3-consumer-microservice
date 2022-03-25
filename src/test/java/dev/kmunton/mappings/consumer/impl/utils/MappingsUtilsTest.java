@@ -64,13 +64,11 @@ public class MappingsUtilsTest {
         Map<MarvelKey, String> mappings = new HashMap<>();
         setField(marvelService, "marvelMappings", mappings);
         when(mappingsUtils.getMarvelMappings("marvel_mappings_v1_0.csv")).thenReturn(mappings);
-        when(mappingsUtils.isFollowingFileNameStandard(any())).thenReturn(true);
 
         // When
         marvelService.updateMappings("marvel_mappings_v1_0.csv");
 
         // Then
-        verify(mappingsUtils, times(1)).isFollowingFileNameStandard(any());
         verify(mappingsUtils, times(1)).getMarvelMappings("marvel_mappings_v1_0.csv");
     }
 
@@ -79,13 +77,11 @@ public class MappingsUtilsTest {
         // Given
         Map<MarvelKey, String> mappings = new HashMap<>();
         setField(marvelService, "marvelMappings", mappings);
-        when(mappingsUtils.isFollowingFileNameStandard(any())).thenReturn(false);
 
         // When
         marvelService.updateMappings("other");
 
         // Then
-        verify(mappingsUtils, times(1)).isFollowingFileNameStandard(any());
         verify(mappingsUtils, times(0)).getMarvelMappings();
     }
 
@@ -94,13 +90,11 @@ public class MappingsUtilsTest {
         // Given
         Map<MarvelKey, String> mappings = new HashMap<>();
         setField(marvelService, "marvelMappings", mappings);
-        when(mappingsUtils.isFollowingFileNameStandard(any())).thenReturn(false);
 
         // When
         marvelService.updateMappings("marvel_mappings_v1_1 copy.csv");
 
         // Then
-        verify(mappingsUtils, times(1)).isFollowingFileNameStandard(any());
         verify(mappingsUtils, times(0)).getMarvelMappings();
     }
 

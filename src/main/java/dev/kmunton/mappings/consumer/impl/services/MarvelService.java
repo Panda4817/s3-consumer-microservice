@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import static dev.kmunton.mappings.consumer.impl.models.MappingFileNames.MARVEL;
 import static dev.kmunton.mappings.consumer.impl.utils.StringHandlerUtils.handleEmpty;
 
 @Service
@@ -57,9 +56,12 @@ public class MarvelService {
 
     public void updateMappings(final String key) throws IOException {
 
-        if (mappingsUtils.isFollowingFileNameStandard(key) && key.contains("marvel_mappings")) {
+        if (key.contains("marvel_mappings")) {
             marvelMappings = mappingsUtils.getMarvelMappings(key);
+            System.out.println("New mapping file being used, with key=" + key);
         }
+
+        System.out.println("Key is incorrect or this mapping file is not used in this microservice, key=" + key);
 
     }
 

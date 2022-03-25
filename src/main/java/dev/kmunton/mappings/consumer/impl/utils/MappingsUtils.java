@@ -23,7 +23,7 @@ public class MappingsUtils {
     
     private final static String MARVEL_BUCKET_NAME = "mappings-demo";
     private final static String MARVEL_FILE_NAME_PREFIX = "marvel_mappings";
-    private final static Pattern FILE_NAME_REGEX = Pattern.compile("^([a-z_]+)_v([0-9])_([0-9])\\.csv$");
+    private final static Pattern FILE_NAME_REGEX = Pattern.compile("^([a-zA-Z_]+)_v([0-9])_([0-9])\\.csv$");
 
     private final static S3Client s3Client = S3Client.builder().region(Region.EU_WEST_2)
             .credentialsProvider(DefaultCredentialsProvider.create())
@@ -35,10 +35,6 @@ public class MappingsUtils {
 
     public Map<MarvelKey, String> getMarvelMappings(final String fileName) throws IOException {
         return transformToMap(getLatestObject(MARVEL_BUCKET_NAME, fileName));
-    }
-
-    public boolean isFollowingFileNameStandard(final String fileName) {
-        return FILE_NAME_REGEX.matcher(fileName).matches();
     }
 
     private Map<MarvelKey, String> transformToMap(final  ResponseInputStream<GetObjectResponse> responseStream) throws IOException {
@@ -79,6 +75,10 @@ public class MappingsUtils {
         }
 
         return getLatestObject(bucketName, latestObject.get().key());
+    }
+
+    private boolean isFollowingFileNameStandard(final String fileName) {
+        return FILE_NAME_REGEX.matcher(fileName).matches();
     }
 
 
